@@ -1,13 +1,21 @@
 import "server-only";
-import { db } from "./db";
+import { db, isDbConfigured } from "./db";
 import { hashPassword } from "./auth";
 import { setSetting } from "./business";
 
 /**
  * راه‌اندازی اولیه سیستم — idempotent
  * شرکت، رول‌های پایه، شعبه دفتر مرکزی کابل، گدام اصلی، کاربر سوپرادمین و تنظیمات پیش‌فرض
+ *
+ * نکته: اگر DATABASE_URL تنظیم نشده باشد (demo mode)، این تابع بدون خطا
+ * برمی‌گردد و فقط { created: false } برمی‌گرداند — چیزی ساخته نمی‌شود.
  */
 export async function ensureBootstrap(): Promise<{ created: boolean }> {
+  // در حالت بدون دیتابیس، چیزی ساخته نمی‌شود
+  if (!isDbConfigured()) {
+    return { created: false };
+  }
+
   const setupDone = await db.systemSetting.findUnique({
     where: { key: "setup_done" },
   });

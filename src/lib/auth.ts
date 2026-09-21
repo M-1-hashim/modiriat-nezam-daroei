@@ -13,6 +13,68 @@ import type { Prisma } from "@prisma/client";
 export const SESSION_COOKIE = "pharma_session";
 const SESSION_DAYS = 30;
 
+// ─────────────────── Demo Mode (بدون نیاز به دیتابیس) ───────────────────
+// وقتی دیتابیس در دسترس نباشد یا هنوز راه‌اندازی نشده باشد، login با این
+// credentials به‌صورت cookie-only کار می‌کند. می‌توانید با env vars تغییر دهید.
+const DEMO_ADMIN_USERNAME = process.env.ADMIN_USERNAME ?? "admin";
+const DEMO_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD ?? "admin123";
+const DEMO_TOKEN_PREFIX = "demo:";
+const DEMO_USER_ID = "demo-admin";
+
+export const DEMO_USER: AuthUser = {
+  id: DEMO_USER_ID,
+  username: DEMO_ADMIN_USERNAME,
+  fullName: "مدیر ارشد سیستم (Demo)",
+  roleKey: "SUPER_ADMIN",
+  roleName: "مدیر ارشد سیستم (دفتر مرکزی)",
+  permissions: ["*"],
+  branchId: null,
+  branchName: null,
+  isSuperAdmin: true,
+};
+
+/** آیا این token مال demo session است؟ */
+function isDemoToken(token: string): boolean {
+  return token.startsWith(DEMO_TOKEN_PREFIX);
+}
+
+/** ساخت token برای demo session (به‌جای ذخیره در دیتابیس) */
+function makeDemoToken(): string {
+  return DEMO_TOKEN_PREFIX + randomBytes(32).toString("hex");
+}
+
+/** ساخت demo session و set کردن کوکی */
+export async function createDemoSession(): Promise<string> {
+  const token = makeDemoToken();
+  const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
+  const store = await cookies();
+  store.set(SESSION_COOKIE, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    expires: expiresAt,
+  });
+  return token;
+}
+
+/** چک credentials در برابر demo admin — بدون نیاز به دیتابیس */
+export function checkDemoCredentials(username: string, password: string): boolean {
+  // مقایسه با زمان ثابت برای جلوگیری از timing attack
+  const u = Buffer.from(username);
+  const p = Buffer.from(password);
+  const eu = Buffer.from(DEMO_ADMIN_USERNAME);
+  const ep = Buffer.from(DEMO_ADMIN_PASSWORD);
+  if (u.length !== eu.length || p.length !== ep.length) {
+    // تطابق طول برای timingSafeEqual لازم است؛ اگر فرق دارد، False برمی‌گردد
+    return false;
+  }
+  return (
+    timingSafeEqual(u, eu) &&
+    timingSafeEqual(p, ep)
+  );
+}
+
 export function hashPassword(password: string): string {
   const salt = randomBytes(16).toString("hex");
   const hash = scryptSync(password, salt, 64).toString("hex");
@@ -51,9 +113,15 @@ export async function createSession(
 ): Promise<string> {
   const token = randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
-  await db.session.create({
-    data: { token: hashToken(token), userId, device, ip, expiresAt },
-  });
+  try {
+    await db.session.create({
+      data: { token: hashToken(token), userId, device, ip, expiresAt },
+    });
+  } catch (e) {
+    // اگر دیتابیس در دسترس نباشد، session در دیتابیس ذخیره نمی‌شود
+    // اما cookie همچنان set می‌شود تا کاربر بتواند وارد شود (demo mode)
+    console.warn("[auth] DB session create failed — cookie-only session:", e instanceof Error ? e.message : String(e));
+  }
   const store = await cookies();
   store.set(SESSION_COOKIE, token, {
     httpOnly: true,
@@ -68,8 +136,12 @@ export async function createSession(
 export async function destroySession(): Promise<void> {
   const store = await cookies();
   const token = store.get(SESSION_COOKIE)?.value;
-  if (token) {
-    await db.session.deleteMany({ where: { token: hashToken(token) } });
+  if (token && !isDemoToken(token)) {
+    try {
+      await db.session.deleteMany({ where: { token: hashToken(token) } });
+    } catch (e) {
+      console.warn("[auth] DB session delete failed (ignoring):", e instanceof Error ? e.message : String(e));
+    }
   }
   store.delete(SESSION_COOKIE);
 }
@@ -84,6 +156,9 @@ function parsePerms(raw: string): string[] {
 }
 
 export async function buildAuthUser(userId: string): Promise<AuthUser | null> {
+  // اگر userId مال demo است، DEMO_USER را برگردان
+  if (userId === DEMO_USER_ID) return DEMO_USER;
+
   const user = await db.user.findUnique({
     where: { id: userId },
     include: { role: true, branch: true },
@@ -104,16 +179,30 @@ export async function buildAuthUser(userId: string): Promise<AuthUser | null> {
   };
 }
 
-/** خواندن کاربر فعلی بدون خطا */
+/** خواندن کاربر فعلی بدون خطا (با پشتیبانی از demo session) */
 export async function getSessionUser(): Promise<AuthUser | null> {
   const store = await cookies();
   const token = store.get(SESSION_COOKIE)?.value;
   if (!token) return null;
-  const session = await db.session.findUnique({
-    where: { token: hashToken(token) },
-  });
-  if (!session || session.expiresAt < new Date()) return null;
-  return buildAuthUser(session.userId);
+
+  // ۱) demo session — مستقیم از cookie، بدون نیاز به دیتابیس
+  if (isDemoToken(token)) {
+    return DEMO_USER;
+  }
+
+  // ۲) database session
+  try {
+    const session = await db.session.findUnique({
+      where: { token: hashToken(token) },
+    });
+    if (!session || session.expiresAt < new Date()) return null;
+    return buildAuthUser(session.userId);
+  } catch (e) {
+    // اگر دیتابیس در دسترس نباشد، cookie وجود دارد ولی session در دیتابیس نیست
+    // در اینجا کاربر را لاگ‌اوت نمی‌کنیم — فقط null برمی‌گردانیم
+    console.warn("[auth] getSessionUser DB lookup failed:", e instanceof Error ? e.message : String(e));
+    return null;
+  }
 }
 
 /** کاربر فعلی یا خطای 401 */

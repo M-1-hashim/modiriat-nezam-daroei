@@ -4,15 +4,10 @@ generator client {
 
 datasource db {
   // PostgreSQL — سازگار با Vercel (Supabase / Neon / Vercel Postgres).
+  // فقط یک متغیر DATABASE_URL لازم است.
   // برای لوکال توسعه بدون PostgreSQL، می‌توانید به‌طور موقت به "sqlite" برگردانید.
-  provider  = "postgresql"
-  // url: اتصال pooler شده (Supabase Transaction Pooler پورت 6543) — برای runtime برنامه
-  // در محیط serverless، اتصال pooler شده مهم است تا connection exhaustion رخ ندهد.
-  url       = env("DATABASE_URL")
-  // directUrl: اتصال مستقیم (پورت 5432) — فقط برای migrationها و prisma db push
-  // (PgBouncer در حالت transaction pooler prepared statements را پشتیبانی نمی‌کند
-  //  که برای Prisma Migrate لازم است)
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // ─────────────────────────── سازمان و دسترسی ───────────────────────────

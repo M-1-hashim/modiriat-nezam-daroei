@@ -3,7 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  // PostgreSQL — سازگار با Vercel (Neon / Vercel Postgres / Supabase).
+  // برای لوکال توسعه بدون PostgreSQL، می‌توانید به‌طور موقت به "sqlite" برگردانید.
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

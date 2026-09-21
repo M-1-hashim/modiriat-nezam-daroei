@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- پس‌زمینه گرداکرد با گرادیان سبز -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#047857"/>
+    </linearGradient>
+  </defs>
+  <rect x="32" y="32" width="448" height="448" rx="96" ry="96" fill="url(#bg)"/>
+  <!-- صلیب پزشکی سفید -->
+  <rect x="216" y="120" width="80" height="272" rx="16" ry="16" fill="#ffffff"/>
+  <rect x="120" y="216" width="272" height="80" rx="16" ry="16" fill="#ffffff"/>
+  <!-- قرص کوچک در گوشه (نماد دارویی) -->
+  <circle cx="392" cy="392" r="44" fill="#dcfce7" stroke="#047857" stroke-width="6"/>
+  <line x1="348" y1="392" x2="436" y2="392" stroke="#047857" stroke-width="6"/>
+</svg>

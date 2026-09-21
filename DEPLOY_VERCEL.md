@@ -17,13 +17,15 @@
 
 ## مرحله ۲: گرفتن Connection String
 
-۱. در Supabase به **Project Settings (⚙️) → Database** بروید
+۱. در Supabase به **Project Settings (⚙️) ← Database** بروید
 ۲. به پایین اسکرول کنید تا **Connection string**
-۳. تب **Direct** (یا Session) را انتخاب کنید — چیزی شبیه:
+۳. تب **Session** را انتخاب کنید — چیزی شبیه:
    ```
-   postgresql://postgres:[PASSWORD]@db.[PROJECT_REF].supabase.co:5432/postgres
+   postgresql://postgres.[PROJECT_REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:5432/postgres
    ```
-۴. کپی کنید — این همان `DATABASE_URL` است که در مرحله بعد لازم دارید
+
+> ⚠️ **مهم:** حتماً از تب **Session** (نه Direct) استفاده کنید!
+> Direct connection روی IPv6 است و Vercel serverless فقط IPv4 می‌دهد.
 
 ---
 
@@ -31,11 +33,20 @@
 
 ۱. به [vercel.com/new](https://vercel.com/new) بروید
 ۲. مخزن **`M-1-hashim/modiriat-nezam-daroei`** را انتخاب کنید
-۳. در قسمت **Environment Variables**، فقط **یک** متغیر اضافه کنید:
+۳. در قسمت **Environment Variables**، این متغیرها را اضافه کنید:
+
+### الزامی (برای کارکرد پروژه):
 
 | Key | Value |
 |---|---|
 | `DATABASE_URL` | (همان connection string از مرحله ۲) |
+
+### اختیاری (برای Supabase Client SDK در آینده):
+
+| Key | Value |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://[PROJECT_REF].supabase.co` |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | (از Supabase → Settings → API) |
 
 ۴. دکمه **Deploy** را بزنید
 ۵. ۲-۳ دقیقه صبر کنید
@@ -58,15 +69,16 @@
 
 | ایرور | راه‌حل |
 |---|---|
+| `Can't reach database server` | از تب **Session** استفاده کنید (نه Direct) |
 | `Environment Variable "DATABASE_URL" cannot be found` | در Vercel → Settings → Environment Variables، آن را اضافه و Redeploy بزنید |
 | `relation does not exist` | SQL را در Supabase اجرا نکرده‌اید — مرحله ۱ را کامل کنید |
-| `Can't reach database server` | connection string را چک کنید — Project Ref و رمز درست باشند |
-| `too many connections` | در Supabase به Project Settings → Database → Connection pooling را فعال کنید |
+| `tenant/user postgres.XXX not found` | region اشتباه است — از Supabase dashboard بررسی کنید |
+| `too many connections` | از Session Pooler استفاده کنید (نه Direct) |
 
 ---
 
 ## خلاصه در یک خط
 
-> Supabase SQL اجرا → connection string کپی → Vercel `DATABASE_URL` → Deploy → ورود با admin/admin123
+> Supabase SQL اجرا → Session Pooler URL کپی → Vercel `DATABASE_URL` → Deploy → ورود با admin/admin123
 
 **تمام!**

@@ -7,9 +7,16 @@
  *
  * نکته: فقط در ران‌تایم nodejs اجرا می‌شود (نه edge) و خطاها هرگز
  * استارت سرور را نمی‌شکنند.
+ *
+ * روی Vercel (serverless) مکانیزم‌های backup و scheduler نادیده گرفته می‌شوند
+ * چون filesystem موقتی است و setInterval بین invocation‌ها پایدار نیست.
+ * برای backup در Vercel از کنسول دیتابیس (Neon/Vercel Postgres) استفاده کنید.
  */
 export async function register(): Promise<void> {
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
+
+  const isVercel = !!process.env.VERCEL;
+
   try {
     const { ensureRateScheduler, maybeAutoSync } = await import("@/lib/rate-sync");
     ensureRateScheduler();
@@ -19,15 +26,21 @@ export async function register(): Promise<void> {
   } catch (e) {
     console.error("[instrumentation] rate scheduler failed to start:", e);
   }
-  try {
-    // ۱) اگر دیتابیس خالی/پاک‌شده باشد، جدیدترین نسخهٔ پشتیبان خودکار برمی‌گردد
-    const { restoreIfWiped, ensureAutoBackupScheduler } = await import(
-      "@/lib/auto-backup"
-    );
-    await restoreIfWiped();
-    // ۲) پشتیبان‌گیری خودکار — هر ۱۵ دقیقه در db/backups و /home/sync/db-backups
-    ensureAutoBackupScheduler();
-  } catch (e) {
-    console.error("[instrumentation] auto-backup scheduler failed to start:", e);
+
+  // پشتیبان‌گیری خودکار فقط در محیط self-host معنی دارد (filesystem پایدار لازم دارد)
+  if (!isVercel) {
+    try {
+      // ۱) اگر دیتابیس خالی/پاک‌شده باشد، جدیدترین نسخهٔ پشتیبان خودکار برمی‌گردد
+      const { restoreIfWiped, ensureAutoBackupScheduler } = await import(
+        "@/lib/auto-backup"
+      );
+      await restoreIfWiped();
+      // ۲) پشتیبان‌گیری خودکار — هر ۱۵ دقیقه در db/backups و /home/sync/db-backups
+      ensureAutoBackupScheduler();
+    } catch (e) {
+      console.error("[instrumentation] auto-backup scheduler failed to start:", e);
+    }
+  } else {
+    console.log("[instrumentation] running on Vercel — skipping auto-backup scheduler");
   }
 }

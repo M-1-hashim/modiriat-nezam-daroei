@@ -1,0 +1,647 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* ─── فونت وزیرمتن — میزبانی محلی (کاملاً آفلاین) ───
+   فونت متغیر: یک فایل برای همه وزن‌ها (۱۰۰ تا ۹۰۰)
+   بدون هیچ درخواست خارجی — صفحه ورود در حالت آفلاین هم فوراً رندر می‌شود */
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("/fonts/Vazirmatn-Variable.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: "Vazirmatn", "Noto Naskh Arabic", "Segoe UI", Tahoma, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-soft-foreground: var(--brand-soft-foreground);
+  --color-brand-strong: var(--brand-strong);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.625rem;
+  /* رنگ برند پیش‌فرض (زمردی) — با تم‌ها و رنگ سفارشی آیتم‌ها قابل تغییر است */
+  --brand: #059669;
+  --brand-strong: #047857;
+  --brand-foreground: #ffffff;
+  --brand-soft: color-mix(in oklab, var(--brand) 10%, white);
+  --brand-soft-foreground: color-mix(in oklab, var(--brand) 55%, black);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-foreground);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: var(--brand);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: var(--brand);
+}
+
+.dark {
+  /* رنگ برند در حالت تاریک (زمردی روشن‌تر) */
+  --brand: #10b981;
+  --brand-strong: #059669;
+  --brand-foreground: #06201a;
+  --brand-soft: color-mix(in oklab, var(--brand) 16%, #0b0f0e);
+  --brand-soft-foreground: color-mix(in oklab, var(--brand) 50%, white);
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-foreground);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: var(--brand);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: var(--brand-foreground);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: var(--brand);
+}
+
+/* ─── تم‌های آمادهٔ سیستم (۶ تم مرجع) ───
+   هر تم مجموعهٔ کامل توکن‌ها را تعیین می‌کند تا به‌صورت یکپارچه روی
+   داشبورد، منو، جدول‌ها، فرم‌ها، دکمه‌ها، کارت‌ها، فاکتورها، دیالوگ‌ها و
+   صفحات تنظیمات اعمال شود. هر تم هم نسخهٔ روشن و هم تاریک دارد.
+
+   توکن‌های سایدبار (--sidebar-*) صرفاً برای نوار منو استفاده می‌شوند تا
+   تم‌های «سایدبار رنگی» دقیقاً مطابق تصاویر مرجع شوند. */
+
+/* ۱. آبی مدرن — Modern Business */
+[data-app-theme="modern-blue"] {
+  --brand: #2563eb;
+  --brand-strong: #1d4ed8;
+  --brand-soft: color-mix(in oklab, #2563eb 10%, white);
+  --brand-soft-foreground: color-mix(in oklab, #2563eb 55%, black);
+  --background: #f3f6fb;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --secondary: #eef2f9;
+  --secondary-foreground: #0f172a;
+  --muted: #eef2f9;
+  --muted-foreground: #64748b;
+  --accent: #e8effa;
+  --accent-foreground: #0f172a;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #2563eb;
+  --chart-1: #2563eb;
+  --chart-2: #06b6d4;
+  --chart-3: #f59e0b;
+  --chart-4: #10b981;
+  --chart-5: #ef4444;
+  --sidebar: #1e40af;
+  --sidebar-foreground: #e0eaff;
+  --sidebar-primary: #3b82f6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #2b4fc0;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.12);
+  --sidebar-ring: #60a5fa;
+}
+.dark[data-app-theme="modern-blue"] {
+  --brand: #60a5fa;
+  --brand-strong: #3b82f6;
+  --brand-foreground: #0b1220;
+  --brand-soft: color-mix(in oklab, #60a5fa 16%, #0b1220);
+  --brand-soft-foreground: #bfdbfe;
+  --background: #0b1220;
+  --foreground: #e2e8f0;
+  --card: #121c31;
+  --card-foreground: #e2e8f0;
+  --popover: #121c31;
+  --popover-foreground: #e2e8f0;
+  --secondary: #1b2740;
+  --secondary-foreground: #e2e8f0;
+  --muted: #1b2740;
+  --muted-foreground: #94a3b8;
+  --accent: #15243d;
+  --accent-foreground: #e2e8f0;
+  --border: rgba(148, 163, 184, 0.16);
+  --input: rgba(148, 163, 184, 0.22);
+  --ring: #60a5fa;
+  --chart-1: #60a5fa;
+  --chart-2: #22d3ee;
+  --chart-3: #fbbf24;
+  --chart-4: #34d399;
+  --chart-5: #fb7185;
+  --sidebar: #172554;
+  --sidebar-foreground: #dbe7ff;
+  --sidebar-primary: #3b82f6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1d3a8a;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(148, 163, 184, 0.14);
+  --sidebar-ring: #60a5fa;
+}
+
+/* ۲. تیره حرفه‌ای — Dark Professional */
+[data-app-theme="dark-pro"] {
+  --brand: #0e7490;
+  --brand-strong: #155e75;
+  --brand-soft: color-mix(in oklab, #0e7490 10%, white);
+  --brand-soft-foreground: color-mix(in oklab, #0e7490 55%, black);
+  --background: #f1f5f9;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --secondary: #e8eef5;
+  --secondary-foreground: #0f172a;
+  --muted: #e8eef5;
+  --muted-foreground: #64748b;
+  --accent: #e0f2f7;
+  --accent-foreground: #0f172a;
+  --border: #dde5ee;
+  --input: #dde5ee;
+  --ring: #0e7490;
+  --chart-1: #0891b2;
+  --chart-2: #059669;
+  --chart-3: #7c3aed;
+  --chart-4: #d97706;
+  --chart-5: #e11d48;
+  --sidebar: #0f172a;
+  --sidebar-foreground: #cbd5e1;
+  --sidebar-primary: #0e7490;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1e293b;
+  --sidebar-accent-foreground: #e2e8f0;
+  --sidebar-border: rgba(148, 163, 184, 0.16);
+  --sidebar-ring: #22d3ee;
+}
+.dark[data-app-theme="dark-pro"] {
+  --brand: #22d3ee;
+  --brand-strong: #06b6d4;
+  --brand-foreground: #06222b;
+  --brand-soft: color-mix(in oklab, #22d3ee 16%, #0b1220);
+  --brand-soft-foreground: #a5f3fc;
+  --background: #0b1220;
+  --foreground: #e2e8f0;
+  --card: #121c31;
+  --card-foreground: #e2e8f0;
+  --popover: #121c31;
+  --popover-foreground: #e2e8f0;
+  --secondary: #1b2740;
+  --secondary-foreground: #e2e8f0;
+  --muted: #1b2740;
+  --muted-foreground: #94a3b8;
+  --accent: #15243d;
+  --accent-foreground: #e2e8f0;
+  --border: rgba(148, 163, 184, 0.16);
+  --input: rgba(148, 163, 184, 0.22);
+  --ring: #22d3ee;
+  --chart-1: #22d3ee;
+  --chart-2: #34d399;
+  --chart-3: #a78bfa;
+  --chart-4: #fbbf24;
+  --chart-5: #fb7185;
+  --sidebar: #080e1c;
+  --sidebar-foreground: #cbd5e1;
+  --sidebar-primary: #164e63;
+  --sidebar-primary-foreground: #a5f3fc;
+  --sidebar-accent: #14213a;
+  --sidebar-accent-foreground: #e2e8f0;
+  --sidebar-border: rgba(148, 163, 184, 0.14);
+  --sidebar-ring: #22d3ee;
+}
+
+/* ۳. سبز تازه — Green Fresh */
+[data-app-theme="green-fresh"] {
+  --brand: #16a34a;
+  --brand-strong: #15803d;
+  --brand-soft: color-mix(in oklab, #16a34a 10%, white);
+  --brand-soft-foreground: color-mix(in oklab, #16a34a 55%, black);
+  --background: #f4faf5;
+  --foreground: #14231a;
+  --card: #ffffff;
+  --card-foreground: #14231a;
+  --popover: #ffffff;
+  --popover-foreground: #14231a;
+  --secondary: #ecf6ee;
+  --secondary-foreground: #14231a;
+  --muted: #ecf6ee;
+  --muted-foreground: #5c7266;
+  --accent: #e7f6eb;
+  --accent-foreground: #14231a;
+  --border: #dcefe1;
+  --input: #dcefe1;
+  --ring: #16a34a;
+  --chart-1: #16a34a;
+  --chart-2: #0d9488;
+  --chart-3: #ca8a04;
+  --chart-4: #0284c7;
+  --chart-5: #dc2626;
+  --sidebar: #16a34a;
+  --sidebar-foreground: #eaf7ee;
+  --sidebar-primary: #12813b;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1eb457;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.16);
+  --sidebar-ring: #86efac;
+}
+.dark[data-app-theme="green-fresh"] {
+  --brand: #4ade80;
+  --brand-strong: #22c55e;
+  --brand-foreground: #052e12;
+  --brand-soft: color-mix(in oklab, #4ade80 16%, #0c1512);
+  --brand-soft-foreground: #bbf7d0;
+  --background: #0c1512;
+  --foreground: #e3efe6;
+  --card: #12201a;
+  --card-foreground: #e3efe6;
+  --popover: #12201a;
+  --popover-foreground: #e3efe6;
+  --secondary: #1a2d23;
+  --secondary-foreground: #e3efe6;
+  --muted: #1a2d23;
+  --muted-foreground: #8fa89a;
+  --accent: #16271e;
+  --accent-foreground: #e3efe6;
+  --border: rgba(134, 239, 172, 0.16);
+  --input: rgba(134, 239, 172, 0.22);
+  --ring: #4ade80;
+  --chart-1: #4ade80;
+  --chart-2: #2dd4bf;
+  --chart-3: #facc15;
+  --chart-4: #38bdf8;
+  --chart-5: #f87171;
+  --sidebar: #0f291d;
+  --sidebar-foreground: #d5ecdc;
+  --sidebar-primary: #15803d;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #1c3a29;
+  --sidebar-accent-foreground: #e3efe6;
+  --sidebar-border: rgba(134, 239, 172, 0.14);
+  --sidebar-ring: #4ade80;
+}
+
+/* ۴. بنفش خلاقانه — Purple Creative */
+[data-app-theme="purple-creative"] {
+  --brand: #7c3aed;
+  --brand-strong: #6d28d9;
+  --brand-soft: color-mix(in oklab, #7c3aed 10%, white);
+  --brand-soft-foreground: color-mix(in oklab, #7c3aed 55%, black);
+  --background: #f8f5fd;
+  --foreground: #1e1533;
+  --card: #ffffff;
+  --card-foreground: #1e1533;
+  --popover: #ffffff;
+  --popover-foreground: #1e1533;
+  --secondary: #f1ebfb;
+  --secondary-foreground: #1e1533;
+  --muted: #f1ebfb;
+  --muted-foreground: #6f628e;
+  --accent: #ece3fb;
+  --accent-foreground: #1e1533;
+  --border: #e6ddf6;
+  --input: #e6ddf6;
+  --ring: #7c3aed;
+  --chart-1: #7c3aed;
+  --chart-2: #d946ef;
+  --chart-3: #0ea5e9;
+  --chart-4: #f59e0b;
+  --chart-5: #10b981;
+  --sidebar: #6d28d9;
+  --sidebar-foreground: #ece4fd;
+  --sidebar-primary: #8b5cf6;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #7c3aed;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.16);
+  --sidebar-ring: #c4b5fd;
+}
+.dark[data-app-theme="purple-creative"] {
+  --brand: #a78bfa;
+  --brand-strong: #8b5cf6;
+  --brand-foreground: #241447;
+  --brand-soft: color-mix(in oklab, #a78bfa 16%, #161225);
+  --brand-soft-foreground: #ddd6fe;
+  --background: #161225;
+  --foreground: #e9e4f5;
+  --card: #1f1932;
+  --card-foreground: #e9e4f5;
+  --popover: #1f1932;
+  --popover-foreground: #e9e4f5;
+  --secondary: #2a2244;
+  --secondary-foreground: #e9e4f5;
+  --muted: #2a2244;
+  --muted-foreground: #a89cc4;
+  --accent: #241c3d;
+  --accent-foreground: #e9e4f5;
+  --border: rgba(196, 181, 253, 0.18);
+  --input: rgba(196, 181, 253, 0.24);
+  --ring: #a78bfa;
+  --chart-1: #a78bfa;
+  --chart-2: #e879f9;
+  --chart-3: #38bdf8;
+  --chart-4: #fbbf24;
+  --chart-5: #34d399;
+  --sidebar: #241543;
+  --sidebar-foreground: #ddd3f3;
+  --sidebar-primary: #7c3aed;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #312158;
+  --sidebar-accent-foreground: #e9e4f5;
+  --sidebar-border: rgba(196, 181, 253, 0.16);
+  --sidebar-ring: #a78bfa;
+}
+
+/* ۵. مینیمال روشن — Light Minimal */
+[data-app-theme="light-minimal"] {
+  --brand: #334155;
+  --brand-strong: #1e293b;
+  --brand-soft: #f1f5f9;
+  --brand-soft-foreground: #334155;
+  --background: #fafafa;
+  --foreground: #18181b;
+  --card: #ffffff;
+  --card-foreground: #18181b;
+  --popover: #ffffff;
+  --popover-foreground: #18181b;
+  --secondary: #f4f4f5;
+  --secondary-foreground: #18181b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --accent: #f4f4f5;
+  --accent-foreground: #18181b;
+  --border: #e8e8ea;
+  --input: #e8e8ea;
+  --ring: #334155;
+  --chart-1: #64748b;
+  --chart-2: #94a3b8;
+  --chart-3: #475569;
+  --chart-4: #0ea5e9;
+  --chart-5: #f59e0b;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #27272a;
+  --sidebar-primary: #e9edf3;
+  --sidebar-primary-foreground: #1e293b;
+  --sidebar-accent: #f3f4f6;
+  --sidebar-accent-foreground: #27272a;
+  --sidebar-border: #e8e8ea;
+  --sidebar-ring: #94a3b8;
+}
+.dark[data-app-theme="light-minimal"] {
+  --brand: #e4e4e7;
+  --brand-strong: #d4d4d8;
+  --brand-foreground: #09090b;
+  --brand-soft: #26262b;
+  --brand-soft-foreground: #d4d4d8;
+  --background: #101012;
+  --foreground: #e9e9ec;
+  --card: #17171a;
+  --card-foreground: #e9e9ec;
+  --popover: #17171a;
+  --popover-foreground: #e9e9ec;
+  --secondary: #212124;
+  --secondary-foreground: #e9e9ec;
+  --muted: #212124;
+  --muted-foreground: #8e8e95;
+  --accent: #1d1d21;
+  --accent-foreground: #e9e9ec;
+  --border: rgba(228, 228, 231, 0.14);
+  --input: rgba(228, 228, 231, 0.2);
+  --ring: #a1a1aa;
+  --chart-1: #94a3b8;
+  --chart-2: #64748b;
+  --chart-3: #cbd5e1;
+  --chart-4: #38bdf8;
+  --chart-5: #fbbf24;
+  --sidebar: #131316;
+  --sidebar-foreground: #e4e4e7;
+  --sidebar-primary: #26262b;
+  --sidebar-primary-foreground: #e4e4e7;
+  --sidebar-accent: #1e1e22;
+  --sidebar-accent-foreground: #e4e4e7;
+  --sidebar-border: rgba(228, 228, 231, 0.12);
+  --sidebar-ring: #52525b;
+}
+
+/* ۶. دارک گرادیانت — Gradient Dark */
+[data-app-theme="gradient-dark"] {
+  --brand: #7c3aed;
+  --brand-strong: #6d28d9;
+  --brand-soft: color-mix(in oklab, #7c3aed 10%, white);
+  --brand-soft-foreground: color-mix(in oklab, #7c3aed 55%, black);
+  --background: #f5f3fc;
+  --foreground: #191233;
+  --card: #ffffff;
+  --card-foreground: #191233;
+  --popover: #ffffff;
+  --popover-foreground: #191233;
+  --secondary: #eeeafb;
+  --secondary-foreground: #191233;
+  --muted: #eeeafb;
+  --muted-foreground: #675f85;
+  --accent: #e9e2fa;
+  --accent-foreground: #191233;
+  --border: #e3ddf5;
+  --input: #e3ddf5;
+  --ring: #7c3aed;
+  --chart-1: #7c3aed;
+  --chart-2: #0891b2;
+  --chart-3: #db2777;
+  --chart-4: #059669;
+  --chart-5: #d97706;
+  --sidebar: #2e1a6e;
+  --sidebar-foreground: #e3ddf7;
+  --sidebar-primary: #7c3aed;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #3b2a86;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.16);
+  --sidebar-ring: #a78bfa;
+}
+.dark[data-app-theme="gradient-dark"] {
+  --brand: #8b5cf6;
+  --brand-strong: #7c3aed;
+  --brand-foreground: #ffffff;
+  --brand-soft: color-mix(in oklab, #8b5cf6 18%, #0d0b21);
+  --brand-soft-foreground: #ddd6fe;
+  --background: #0d0b21;
+  --foreground: #e7e5f4;
+  --card: #161334;
+  --card-foreground: #e7e5f4;
+  --popover: #161334;
+  --popover-foreground: #e7e5f4;
+  --secondary: #201a45;
+  --secondary-foreground: #e7e5f4;
+  --muted: #201a45;
+  --muted-foreground: #a49cc4;
+  --accent: #1c163c;
+  --accent-foreground: #e7e5f4;
+  --border: rgba(167, 139, 250, 0.2);
+  --input: rgba(167, 139, 250, 0.26);
+  --ring: #8b5cf6;
+  --chart-1: #22d3ee;
+  --chart-2: #a78bfa;
+  --chart-3: #f472b6;
+  --chart-4: #34d399;
+  --chart-5: #fbbf24;
+  --sidebar: #221c4d;
+  --sidebar-foreground: #dcd6f7;
+  --sidebar-primary: #7c3aed;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #2d2660;
+  --sidebar-accent-foreground: #e7e5f4;
+  --sidebar-border: rgba(167, 139, 250, 0.2);
+  --sidebar-ring: #a78bfa;
+}
+
+/* جلوهٔ گرادیانت تم «دارک گرادیانت» — سایدبار و دکمه‌های اصلی */
+[data-app-theme="gradient-dark"] .bg-sidebar {
+  background-image: linear-gradient(180deg, #312e81 0%, #1e1b4b 45%, #4c1d95 100%);
+}
+[data-app-theme="gradient-dark"] .bg-primary {
+  background-image: linear-gradient(135deg, #06b6d4 0%, #8b5cf6 55%, #a855f7 100%);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  /* تغییر نرم رنگ‌ها هنگام تعویض تم */
+  body,
+  button,
+  .theme-transition {
+    transition-property: background-color, border-color, color;
+    transition-duration: 180ms;
+    transition-timing-function: ease;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Vazirmatn", "Noto Naskh Arabic", "Segoe UI", Tahoma, Arial, sans-serif;
+  }
+}
+
+/* اسکرول‌بار زیباتر */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: oklch(0.7 0 0 / 0.35);
+  border-radius: 8px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.6 0 0 / 0.5);
+}
+
+/* اعداد در فیلدهای عددی از چپ خوانده شوند */
+input[type="number"] {
+  direction: ltr;
+  text-align: left;
+}
+
+/* استایل چاپ اسناد */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #print-root,
+  #print-root * {
+    visibility: visible !important;
+  }
+  #print-root {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    padding: 8mm;
+  }
+  .print-doc table {
+    page-break-inside: auto;
+  }
+  .print-doc tr {
+    page-break-inside: avoid;
+  }
+}
+

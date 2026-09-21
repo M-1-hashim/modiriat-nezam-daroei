@@ -1,0 +1,908 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────── سازمان و دسترسی ───────────────────────────
+
+model Branch {
+  id           String   @id @default(cuid())
+  code         String   @unique
+  name         String
+  city         String?
+  address      String?
+  phone        String?
+  isHeadOffice Boolean  @default(false)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  users         User[]
+  warehouses    Warehouse[]
+  territories   Territory[]
+  salespersons  Salesperson[]
+  customers     Customer[]
+  purchases     Purchase[]
+  sales         Sale[]
+  payments      Payment[]
+  expenses      Expense[]
+  partnerships  Partnership[]
+  sequences     NumberSequence[]
+  stockMovements StockMovement[]
+  salesReturns  SalesReturn[]
+  purchaseReturns PurchaseReturn[]
+  employees     Employee[]
+  attendanceRecords AttendanceRecord[]
+}
+
+model Role {
+  id          String  @id @default(cuid())
+  key         String  @unique
+  name        String
+  permissions String  @default("[]")
+  isSystem    Boolean @default(false)
+  createdAt   DateTime @default(now())
+  users       User[]
+}
+
+model User {
+  id           String    @id @default(cuid())
+  username     String    @unique
+  passwordHash String
+  fullName     String
+  phone        String?
+  roleId       String
+  role         Role      @relation(fields: [roleId], references: [id])
+  branchId     String?
+  branch       Branch?   @relation(fields: [branchId], references: [id])
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  sessions  Session[]
+  auditLogs AuditLog[]
+  attendanceRecords AttendanceRecord[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  device    String?
+  ip        String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Warehouse {
+  id        String   @id @default(cuid())
+  branchId  String
+  branch    Branch   @relation(fields: [branchId], references: [id])
+  name      String
+  location  String?
+  isMain    Boolean  @default(false)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  stockItems      StockItem[]
+  purchases       Purchase[]
+  sales           Sale[]
+  movementsFrom   StockMovement[] @relation("StockMovementFrom")
+  movementsTo     StockMovement[] @relation("StockMovementTo")
+  salesReturns    SalesReturn[]
+  purchaseReturns PurchaseReturn[]
+}
+
+model Territory {
+  id          String   @id @default(cuid())
+  branchId    String
+  branch      Branch   @relation(fields: [branchId], references: [id])
+  name        String
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  customers    Customer[]
+  salespersons Salesperson[]
+  sales        Sale[]
+}
+
+model Salesperson {
+  id         String   @id @default(cuid())
+  branchId   String
+  branch     Branch   @relation(fields: [branchId], references: [id])
+  name       String
+  phone      String?
+  commission Float    @default(0)
+  userId     String?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  territories Territory[]
+  sales       Sale[]
+  customers   Customer[]
+}
+
+model Customer {
+  id            String   @id @default(cuid())
+  localId       String?  @unique
+  branchId      String
+  branch        Branch   @relation(fields: [branchId], references: [id])
+  type          String   @default("PHARMACY")
+  name          String
+  contactPerson String?
+  phone         String?
+  address       String?
+  territoryId   String?
+  territory     Territory? @relation(fields: [territoryId], references: [id])
+  salespersonId String?
+  salesperson   Salesperson? @relation(fields: [salespersonId], references: [id])
+  creditLimit   Float    @default(0)
+  paymentTerms  Int      @default(0)
+  balance       Float    @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  sales    Sale[]
+  payments Payment[]
+  salesReturns SalesReturn[]
+
+  @@index([branchId])
+  @@index([name])
+}
+
+model Supplier {
+  id            String   @id @default(cuid())
+  type          String   @default("LOCAL")
+  name          String
+  country       String?
+  contactPerson String?
+  phone         String?
+  email         String?
+  address       String?
+  balance       Float    @default(0)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  purchases        Purchase[]
+  payments         Payment[]
+  purchaseReturns  PurchaseReturn[]
+  promotions       Promotion[]
+}
+
+// ─────────────────────────── محصولات و انبار ───────────────────────────
+
+model Category {
+  id       String @id @default(cuid())
+  name     String @unique
+  products Product[]
+}
+
+model Manufacturer {
+  id       String @id @default(cuid())
+  name     String
+  country  String?
+  products Product[]
+}
+
+model Product {
+  id             String   @id @default(cuid())
+  localId        String?  @unique
+  name           String
+  genericName    String?
+  categoryId     String?
+  category       Category? @relation(fields: [categoryId], references: [id])
+  manufacturerId String?
+  manufacturer   Manufacturer? @relation(fields: [manufacturerId], references: [id])
+  country        String?
+  dosageForm     String?
+  strength       String?
+  unit           String   @default("عدد")
+  packaging      String?
+  barcode        String?
+  storeCondition String?
+  purchasePrice  Float    @default(0)
+  salePrice      Float    @default(0)
+  minStock       Float    @default(0)
+  maxStock       Float    @default(0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  batches       Batch[]
+  stockItems    StockItem[]
+  purchaseItems PurchaseItem[]
+  saleItems     SaleItem[]
+  promoLinks    PromotionProduct[]
+
+  @@index([name])
+}
+
+model Batch {
+  id          String    @id @default(cuid())
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id])
+  batchNumber String
+  mfgDate     DateTime?
+  expiryDate  DateTime?
+  costPrice   Float     @default(0)
+  purchaseId  String?
+  createdAt   DateTime  @default(now())
+
+  stockItems    StockItem[]
+  purchaseItems PurchaseItem[]
+  saleItems     SaleItem[]
+  stockMovements StockMovement[]
+  salesReturnItems SalesReturnItem[]
+  purchaseReturnItems PurchaseReturnItem[]
+
+  @@unique([productId, batchNumber])
+  @@index([expiryDate])
+}
+
+model StockItem {
+  id          String    @id @default(cuid())
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id])
+  batchId     String
+  batch       Batch     @relation(fields: [batchId], references: [id])
+  warehouseId String
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id])
+  quantity    Float     @default(0)
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([productId, batchId, warehouseId])
+  @@index([warehouseId])
+}
+
+model StockMovement {
+  id              String   @id @default(cuid())
+  localId         String?  @unique
+  productId       String
+  batchId         String?
+  batch           Batch?   @relation(fields: [batchId], references: [id])
+  fromWarehouseId String?
+  fromWarehouse   Warehouse? @relation("StockMovementFrom", fields: [fromWarehouseId], references: [id])
+  toWarehouseId   String?
+  toWarehouse     Warehouse? @relation("StockMovementTo", fields: [toWarehouseId], references: [id])
+  type            String
+  quantity        Float
+  reason          String?
+  referenceType   String?
+  referenceId     String?
+  userId          String
+  userName        String
+  branchId        String
+  branch          Branch   @relation(fields: [branchId], references: [id])
+  createdAt       DateTime @default(now())
+
+  @@index([productId])
+  @@index([createdAt])
+}
+
+// ─────────────────────────── خرید ───────────────────────────
+
+model Purchase {
+  id             String   @id @default(cuid())
+  localId        String   @unique
+  number         String   @unique
+  branchId       String
+  branch         Branch   @relation(fields: [branchId], references: [id])
+  supplierId     String
+  supplier       Supplier @relation(fields: [supplierId], references: [id])
+  warehouseId    String
+  warehouse      Warehouse @relation(fields: [warehouseId], references: [id])
+  type           String   @default("LOCAL")
+  date           DateTime
+  currency       String   @default("AFN")
+  exchangeRate   Float    @default(1)
+  subtotal       Float    @default(0)
+  discountTotal  Float    @default(0)
+  // تخفیف سطح فاکتور (مستقل از تخفیف اقلام) — PERCENT | AMOUNT
+  invoiceDiscountType   String?
+  invoiceDiscountValue  Float  @default(0)
+  invoiceDiscountAmount Float  @default(0)
+  discountReason String?
+  // پروموشن سطح فاکتور (فقط scope=INVOICE)
+  promotionId             String?
+  promotion               Promotion? @relation("PurchaseInvoicePromo", fields: [promotionId], references: [id])
+  promotionCode           String?
+  promotionDiscountAmount Float   @default(0)
+  extraCost      Float    @default(0)
+  extraCostBasis String   @default("VALUE")
+  total          Float    @default(0)
+  totalAfn       Float    @default(0)
+  paidAmount     Float    @default(0)
+  returnedAfn    Float    @default(0)
+  status         String   @default("DRAFT")
+  notes          String?
+  createdBy      String
+  createdByName  String
+  approvedBy     String?
+  approvedAt     DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  items    PurchaseItem[]
+  payments Payment[]
+  returns  PurchaseReturn[]
+
+  @@index([branchId])
+  @@index([status])
+  @@index([date])
+}
+
+model PurchaseItem {
+  id             String    @id @default(cuid())
+  purchaseId     String
+  purchase       Purchase  @relation(fields: [purchaseId], references: [id])
+  productId      String
+  product        Product   @relation(fields: [productId], references: [id])
+  batchNumber    String
+  mfgDate        DateTime?
+  expiryDate     DateTime?
+  quantity       Float
+  freeQuantity   Float     @default(0)
+  promoFreeQuantity Float  @default(0)
+  unitPrice      Float
+  // تخفیف کاربر — نوع ورودی: PERCENT (درصد) یا AMOUNT (مبلغ ثابت)
+  discountType   String    @default("PERCENT")
+  discountPct    Float     @default(0)
+  discountAmount Float     @default(0)
+  discountReason String?
+  // تخفیف/کالای رایگان پروموشن (سرور محاسبه می‌کند)
+  promotionId         String?
+  promotion           Promotion? @relation("PurchaseItemPromo", fields: [promotionId], references: [id])
+  promoDiscountAmount Float  @default(0)
+  netUnitPrice   Float
+  effectiveCost  Float     @default(0)
+  promotionNote  String?
+  lineTotal      Float
+  lineTotalAfn   Float
+  batchId        String?
+  batch          Batch? @relation(fields: [batchId], references: [id])
+
+  @@index([purchaseId])
+  @@index([productId])
+}
+
+// ─────────────────────────── فروش ───────────────────────────
+
+model Sale {
+  id              String   @id @default(cuid())
+  localId         String   @unique
+  number          String   @unique
+  branchId        String
+  branch          Branch   @relation(fields: [branchId], references: [id])
+  customerId      String
+  customer        Customer @relation(fields: [customerId], references: [id])
+  warehouseId     String
+  warehouse       Warehouse @relation(fields: [warehouseId], references: [id])
+  salespersonId   String?
+  salesperson     Salesperson? @relation(fields: [salespersonId], references: [id])
+  territoryId     String?
+  territory       Territory? @relation(fields: [territoryId], references: [id])
+  type            String   @default("WHOLESALE")
+  invoiceTemplate String   @default("DETAILED")
+  date            DateTime
+  currency        String   @default("AFN")
+  exchangeRate    Float    @default(1)
+  subtotal        Float    @default(0)
+  discountTotal   Float    @default(0)
+  // تخفیف سطح فاکتور (مستقل از تخفیف اقلام) — PERCENT | AMOUNT
+  invoiceDiscountType   String?
+  invoiceDiscountValue  Float  @default(0)
+  invoiceDiscountAmount Float  @default(0)
+  discountReason String?
+  // پروموشن سطح فاکتور (فقط scope=INVOICE)
+  promotionId             String?
+  promotion               Promotion? @relation("SaleInvoicePromo", fields: [promotionId], references: [id])
+  promotionCode           String?
+  promotionDiscountAmount Float   @default(0)
+  total           Float    @default(0)
+  totalAfn       Float    @default(0)
+  paidAmount      Float    @default(0)
+  returnedAfn     Float    @default(0)
+  status          String   @default("DRAFT")
+  notes           String?
+  createdBy       String
+  createdByName   String
+  approvedBy      String?
+  approvedAt      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  items    SaleItem[]
+  payments Payment[]
+  returns  SalesReturn[]
+
+  @@index([branchId])
+  @@index([status])
+  @@index([date])
+}
+
+model SaleItem {
+  id             String  @id @default(cuid())
+  saleId         String
+  sale           Sale    @relation(fields: [saleId], references: [id])
+  productId      String
+  product        Product @relation(fields: [productId], references: [id])
+  batchId        String
+  batch          Batch   @relation(fields: [batchId], references: [id])
+  quantity       Float
+  freeQuantity   Float   @default(0)
+  promoFreeQuantity Float @default(0)
+  unitPrice      Float
+  // تخفیف کاربر — نوع ورودی: PERCENT (درصد) یا AMOUNT (مبلغ ثابت)
+  discountType   String  @default("PERCENT")
+  discountPct    Float   @default(0)
+  discountAmount Float   @default(0)
+  discountReason String?
+  // تخفیف/کالای رایگان پروموشن (سرور محاسبه می‌کند)
+  promotionId         String?
+  promotion           Promotion? @relation("SaleItemPromo", fields: [promotionId], references: [id])
+  promoDiscountAmount Float @default(0)
+  netUnitPrice   Float
+  promotionNote  String?
+  costAtSale     Float   @default(0)
+  lineTotal      Float
+  lineTotalAfn   Float
+
+  @@index([saleId])
+  @@index([productId])
+  @@index([batchId])
+}
+
+// ─────────────────────────── پرداخت‌ها ───────────────────────────
+
+model Payment {
+  id            String   @id @default(cuid())
+  localId       String   @unique
+  number        String   @unique
+  type          String
+  direction     String
+  branchId      String
+  branch        Branch   @relation(fields: [branchId], references: [id])
+  customerId    String?
+  customer      Customer? @relation(fields: [customerId], references: [id])
+  supplierId    String?
+  supplier      Supplier? @relation(fields: [supplierId], references: [id])
+  saleId        String?
+  sale          Sale?    @relation(fields: [saleId], references: [id])
+  purchaseId    String?
+  purchase      Purchase? @relation(fields: [purchaseId], references: [id])
+  amount        Float
+  currency      String   @default("AFN")
+  exchangeRate  Float    @default(1)
+  method        String   @default("CASH")
+  reference     String?
+  date          DateTime
+  notes         String?
+  createdBy     String
+  createdByName String
+  status        String   @default("COMPLETED")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([branchId])
+  @@index([date])
+}
+
+// ─────────────────────────── برگشتی‌ها ───────────────────────────
+
+model SalesReturn {
+  id            String   @id @default(cuid())
+  localId       String   @unique
+  number        String   @unique
+  saleId        String
+  sale          Sale     @relation(fields: [saleId], references: [id])
+  branchId      String
+  branch        Branch   @relation(fields: [branchId], references: [id])
+  customerId    String
+  customer      Customer @relation(fields: [customerId], references: [id])
+  warehouseId   String
+  warehouse     Warehouse @relation(fields: [warehouseId], references: [id])
+  date          DateTime
+  totalAfn      Float    @default(0)
+  status        String   @default("REQUESTED")
+  reason        String?
+  createdBy     String
+  createdByName String
+  approvedBy    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  items SalesReturnItem[]
+
+  @@index([branchId])
+}
+
+model SalesReturnItem {
+  id           String       @id @default(cuid())
+  returnId     String
+  return       SalesReturn  @relation(fields: [returnId], references: [id])
+  saleItemId   String?
+  productId    String
+  batchId      String
+  batch        Batch        @relation(fields: [batchId], references: [id])
+  quantity     Float
+  unitPriceAfn Float
+  lineTotalAfn Float
+}
+
+model PurchaseReturn {
+  id            String   @id @default(cuid())
+  localId       String   @unique
+  number        String   @unique
+  purchaseId    String
+  purchase      Purchase @relation(fields: [purchaseId], references: [id])
+  branchId      String
+  branch        Branch   @relation(fields: [branchId], references: [id])
+  supplierId    String
+  supplier      Supplier @relation(fields: [supplierId], references: [id])
+  warehouseId   String
+  warehouse     Warehouse @relation(fields: [warehouseId], references: [id])
+  date          DateTime
+  totalAfn      Float    @default(0)
+  status        String   @default("REQUESTED")
+  reason        String?
+  createdBy     String
+  createdByName String
+  approvedBy    String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  items PurchaseReturnItem[]
+
+  @@index([branchId])
+}
+
+model PurchaseReturnItem {
+  id             String         @id @default(cuid())
+  returnId       String
+  return         PurchaseReturn @relation(fields: [returnId], references: [id])
+  purchaseItemId String?
+  productId      String
+  batchId        String
+  batch          Batch          @relation(fields: [batchId], references: [id])
+  quantity       Float
+  unitCostAfn    Float
+  lineTotalAfn   Float
+}
+
+// ─────────────────────────── مصارف ───────────────────────────
+
+model ExpenseCategory {
+  id       String @id @default(cuid())
+  name     String @unique
+  expenses Expense[]
+}
+
+model Expense {
+  id            String          @id @default(cuid())
+  localId       String          @unique
+  branchId      String
+  branch        Branch          @relation(fields: [branchId], references: [id])
+  categoryId    String
+  category      ExpenseCategory @relation(fields: [categoryId], references: [id])
+  amount        Float
+  currency      String          @default("AFN")
+  exchangeRate  Float           @default(1)
+  amountAfn     Float
+  date          DateTime
+  description   String?
+  status        String          @default("PENDING")
+  createdBy     String
+  createdByName String
+  approvedBy    String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([branchId])
+  @@index([date])
+}
+
+// ─────────────────────────── شراکت و مضاربه ───────────────────────────
+
+model Partner {
+  id        String @id @default(cuid())
+  name      String
+  phone     String?
+  note      String?
+  isActive  Boolean @default(true)
+  partnerships Partnership[]
+}
+
+model Partnership {
+  id             String    @id @default(cuid())
+  branchId       String
+  branch         Branch    @relation(fields: [branchId], references: [id])
+  partnerId      String
+  partner        Partner   @relation(fields: [partnerId], references: [id])
+  type           String
+  role           String?
+  capital        Float     @default(0)
+  profitSharePct Float     @default(0)
+  lossSharePct   Float     @default(0)
+  profitMethod   String?
+  startDate      DateTime
+  endDate        DateTime?
+  terms          String?
+  status         String    @default("ACTIVE")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  distributions ProfitDistribution[]
+
+  @@index([branchId])
+}
+
+model ProfitDistribution {
+  id               String      @id @default(cuid())
+  partnershipId    String
+  partnership      Partnership @relation(fields: [partnershipId], references: [id])
+  periodFrom       DateTime
+  periodTo         DateTime
+  revenueAfn       Float       @default(0)
+  cogsAfn          Float       @default(0)
+  grossProfitAfn   Float       @default(0)
+  expensesAfn      Float       @default(0)
+  netProfitAfn     Float       @default(0)
+  distributionBase String      @default("NET_PROFIT")
+  baseAmountAfn    Float       @default(0)
+  sharePct         Float
+  partnerShareAfn  Float       @default(0)
+  status           String      @default("CALCULATED")
+  notes            String?
+  createdBy        String
+  createdAt        DateTime    @default(now())
+
+  @@index([partnershipId])
+}
+
+// ─────────────────────────── اسعار ───────────────────────────
+
+model ExchangeRate {
+  id             String   @id @default(cuid())
+  base           String
+  quote          String
+  buyRate        Float
+  sellRate       Float
+  source         String
+  isOffline      Boolean  @default(false)
+  recordedBy     String?
+  recordedByName String?
+  createdAt      DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model CurrencySettings {
+  id             String    @id @default("main")
+  apiEndpoint    String    @default("https://sarafi.af/")
+  apiKey         String?
+  refreshMinutes Int       @default(15)
+  mapping        String    @default("{\"USD/AFN\":\"rates.AFN\",\"USD/PKR\":\"rates.PKR\"}")
+  // اسپرد خرید/فروش به درصد — نرخ خرید = بازار × (۱ − s/۲۰۰) و نرخ فروش = بازار × (۱ + s/۲۰۰)
+  spreadPercent  Float     @default(1)
+  lastSyncAt     DateTime?
+  lastSyncStatus String?
+  lastSyncError  String?
+  enabled        Boolean   @default(true)
+}
+
+// ارزهای سیستم — لیست قابل توسعه (USD/AFN/EUR/PKR/IRR پیش‌فرض)
+model Currency {
+  id        String   @id @default(cuid())
+  code      String   @unique // ISO مثل USD, AFN
+  name      String   // نام دری مثل «دالر امریکایی»
+  symbol    String?  // نماد اختیاری مثل $
+  isActive  Boolean  @default(true)
+  isBase    Boolean  @default(false) // ارز پایهٔ منبع API (دلر) — برای محاسبهٔ نرخ‌های متقاطع
+  sortOrder Int      @default(100)
+  createdAt DateTime @default(now())
+}
+
+// ─────────────────────── پروموشن (طرح تشویقی) — مستقل از تخفیف ───────────────────────
+
+model Promotion {
+  id             String    @id @default(cuid())
+  code           String    @unique
+  name           String
+  // نوع: FREE_QTY (خرید X دریافت Y رایگان) | PERCENT (درصدی) | AMOUNT (مبلغی) | COMBINED (ترکیبی)
+  type           String
+  // دامنه: LINE (هر قلم) | INVOICE (کل فاکتور — فقط تخفیف)
+  scope          String    @default("LINE")
+  // محصولات مشمول — اگر allProducts=true همه محصولات
+  allProducts    Boolean   @default(false)
+  products       PromotionProduct[]
+  // شرکت/تأمین‌کننده مربوطه (طرح‌های تشویقی تأمین‌کننده)
+  supplierId     String?
+  supplier       Supplier? @relation(fields: [supplierId], references: [id])
+  // نوع مشتری مشمول برای فروش (خالی = همه مشتریان)
+  customerType   String?
+  appliesToSale     Boolean @default(true)
+  appliesToPurchase Boolean @default(false)
+  // شرایط حداقل خرید
+  minQuantity    Float     @default(0)
+  minAmount      Float     @default(0)
+  // پاداش‌ها
+  freeQuantity   Float     @default(0)
+  discountPct    Float     @default(0)
+  discountAmount Float     @default(0)
+  startDate      DateTime
+  endDate        DateTime
+  terms          String?
+  description    String?
+  isActive       Boolean   @default(true)
+  usageCount     Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  purchaseDocs  Purchase[]     @relation("PurchaseInvoicePromo")
+  saleDocs      Sale[]         @relation("SaleInvoicePromo")
+  purchaseItems PurchaseItem[] @relation("PurchaseItemPromo")
+  saleItems     SaleItem[]     @relation("SaleItemPromo")
+  usages        PromotionUsage[]
+}
+
+model PromotionProduct {
+  id          String    @id @default(cuid())
+  promotionId String
+  promotion   Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id])
+
+  @@unique([promotionId, productId])
+}
+
+model PromotionUsage {
+  id           String    @id @default(cuid())
+  promotionId  String
+  promotion    Promotion @relation(fields: [promotionId], references: [id])
+  docType      String
+  docId        String
+  docNumber    String
+  branchId     String?
+  scope        String
+  productId    String?
+  productName  String?
+  quantity     Float     @default(0)
+  freeQuantity Float     @default(0)
+  freeValueAfn Float     @default(0)
+  discountAfn  Float     @default(0)
+  usedAt       DateTime  @default(now())
+
+  @@index([promotionId])
+  @@index([docType, docId])
+  @@index([usedAt])
+}
+
+// ─────────────────────────── سیستم ───────────────────────────
+
+model SystemSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model NumberSequence {
+  id       String @id @default(cuid())
+  branchId String
+  branch   Branch @relation(fields: [branchId], references: [id])
+  docType  String
+  prefix   String
+  current  Int    @default(0)
+
+  @@unique([branchId, docType])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  userName  String?
+  branchId  String?
+  action    String
+  entity    String
+  entityId  String?
+  summary   String?
+  before    String?
+  after     String?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String
+  severity  String   @default("INFO")
+  title     String
+  message   String?
+  branchId  String?
+  userId    String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([isRead])
+}
+
+model Backup {
+  id            String   @id @default(cuid())
+  filename      String
+  size          Int
+  type          String   @default("MANUAL")
+  status        String   @default("OK")
+  note          String?
+  createdBy     String?
+  createdByName String?
+  createdAt     DateTime @default(now())
+}
+
+model SyncLog {
+  id         String   @id @default(cuid())
+  deviceId   String
+  localId    String
+  entityType String
+  entityId   String?
+  status     String
+  message    String?
+  userId     String
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// ─────────────────────────── کارکنان و حاضری ───────────────────────────
+
+model Employee {
+  id            String   @id @default(cuid())
+  branchId      String
+  branch        Branch   @relation(fields: [branchId], references: [id])
+  fullName      String
+  fatherName    String?
+  phone         String?
+  position      String?
+  monthlySalary Float    @default(0)
+  startDate     DateTime @default(now())
+  isActive      Boolean  @default(true)
+  note          String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  attendance AttendanceRecord[]
+
+  @@index([branchId])
+}
+
+model AttendanceRecord {
+  id            String   @id @default(cuid())
+  employeeId    String
+  employee      Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  branchId      String
+  branch        Branch   @relation(fields: [branchId], references: [id])
+  date          DateTime
+  status        String   @default("PRESENT") // PRESENT | ABSENT | LEAVE
+  leaveApproved Boolean  @default(false)
+  note          String?
+  recordedById  String?
+  recordedBy    User?    @relation(fields: [recordedById], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([employeeId, date])
+  @@index([branchId, date])
+}
